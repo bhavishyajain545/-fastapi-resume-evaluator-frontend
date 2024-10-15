@@ -13,7 +13,7 @@ function App() {
   const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB in bytes
   const ALLOWED_FILE_TYPES = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
 
-  // Define the backend URL based on environment variable or default
+  // Use environment variable for backend URL, fallback to default if not set
   const API_URL = process.env.REACT_APP_BACKEND_URL || 'https://fastapi-resume-evaluator-backend.onrender.com/upload_resume/';
 
   const theme = createTheme({
@@ -34,6 +34,7 @@ function App() {
   };
 
   const uploadResume = async () => {
+    setError(""); // Clear any previous errors
     if (!selectedFile) {
       setError("Please select a file before uploading.");
       return;
@@ -59,13 +60,16 @@ function App() {
         body: formData,
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (response.ok) {
+        const data = await response.json();
+        setFeedback(data.feedback);
+      } else if (response.status === 400) {
+        setError("Bad request. Please check the file format or try another resume.");
+      } else if (response.status === 500) {
+        setError("Server error. Please try again later.");
+      } else {
+        setError(`Unexpected error: ${response.statusText}`);
       }
-
-      const data = await response.json();
-      setFeedback(data.feedback);
-      setError(""); // Clear error if successful
     } catch (error) {
       console.error("Error uploading resume:", error);
       setError("There was an error uploading the resume. Please try again.");
