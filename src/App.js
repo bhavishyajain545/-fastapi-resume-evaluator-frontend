@@ -13,7 +13,9 @@ function App() {
   const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB in bytes
   const ALLOWED_FILE_TYPES = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
 
-  // Create theme with proper background and text color changes for dark and light modes
+  // Define the backend URL based on environment variable or default
+  const API_URL = process.env.REACT_APP_BACKEND_URL || 'https://fastapi-resume-evaluator-backend.onrender.com/upload_resume/';
+
   const theme = createTheme({
     palette: {
       mode: darkMode ? 'dark' : 'light',
@@ -52,9 +54,7 @@ function App() {
 
     try {
       setLoading(true); // Set loading state
-
-      // Updated URL to point to the deployed backend on Render
-      const response = await fetch("https://fastapi-resume-evaluator-backend.onrender.com/upload_resume/", {
+      const response = await fetch(API_URL, {
         method: "POST",
         body: formData,
       });
@@ -81,9 +81,23 @@ function App() {
     doc.save("resume_feedback.pdf");
   };
 
+  const resetRequest = () => {
+    setSelectedFile(null);
+    setFeedback("");
+    setError("");
+  };
+
   return (
     <ThemeProvider theme={theme}>
-      <Box sx={{ p: 4, maxWidth: '600px', margin: '0 auto', textAlign: 'center', backgroundColor: theme.palette.background.default }}>
+      <Box sx={{
+        height: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: theme.palette.background.default,
+        textAlign: 'center',
+      }}>
         <Typography variant="h3" gutterBottom color={theme.palette.text.primary}>
           AI-powered Resume Evaluator
         </Typography>
@@ -135,16 +149,16 @@ function App() {
           </Box>
         )}
 
-        <Box sx={{ mt: 3 }}>
-          <Typography variant="h5" gutterBottom color={theme.palette.text.primary}>
-            Feedback:
-          </Typography>
-          <Typography variant="body1" sx={{ fontStyle: 'italic' }} color={theme.palette.text.primary}>
-            {feedback || "No feedback yet."}
-          </Typography>
+        {feedback && (
+          <Box sx={{ mt: 3 }}>
+            <Typography variant="h5" gutterBottom color={theme.palette.text.primary}>
+              Feedback:
+            </Typography>
+            <Typography variant="body1" sx={{ fontStyle: 'italic' }} color={theme.palette.text.primary}>
+              {feedback}
+            </Typography>
 
-          {/* Download as PDF Button */}
-          {feedback && (
+            {/* Download as PDF Button */}
             <Button
               variant="contained"
               color="secondary"
@@ -154,8 +168,18 @@ function App() {
             >
               Download Feedback as PDF
             </Button>
-          )}
-        </Box>
+          </Box>
+        )}
+
+        {/* New Request Button */}
+        <Button
+          variant="contained"
+          color="secondary"
+          onClick={resetRequest}
+          sx={{ mt: 2 }}
+        >
+          New Request
+        </Button>
       </Box>
     </ThemeProvider>
   );
